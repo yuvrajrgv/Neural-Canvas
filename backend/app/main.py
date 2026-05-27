@@ -1,5 +1,5 @@
 """
-Toonify - AI Image Transformation API
+Neuralcanvas - AI Image Transformation API
 FastAPI Main Application
 """
 from fastapi import FastAPI

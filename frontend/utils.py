@@ -1,5 +1,5 @@
 """
-Toonify - API Utilities and Session Management
+Neuralcanvas - API Utilities and Session Management
 """
 import streamlit as st
 import requests

@@ -1,5 +1,5 @@
 """
-Toonify - Streamlit Frontend Application
+Neuralcanvas - Streamlit Frontend Application
 AI-Powered Image Transformation & Cartoon Recognition
 """
 import streamlit as st
@@ -9,7 +9,7 @@ from views import render_auth_page, render_main_app
 
 # ============ PAGE CONFIG ============
 st.set_page_config(
-    page_title="Toonify | AI Image Transformation",
+    page_title="Neuralcanvas | AI Image Transformation",
     page_icon="🎨",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -17,7 +17,7 @@ st.set_page_config(
         'Get Help': 'https://github.com/toonify/help',
         'Report a bug': 'https://github.com/toonify/issues',
         'About': """
-        # 🎨 Toonify
+        # 🎨 Neuralcanvas
         
         **AI-Powered Image Transformation & Cartoon Recognition**
         

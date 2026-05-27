@@ -8,7 +8,7 @@ import os
 
 class Settings(BaseSettings):
     # Application
-    APP_NAME: str = "Toonify"
+    APP_NAME: str = "Neuralcanvas"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     

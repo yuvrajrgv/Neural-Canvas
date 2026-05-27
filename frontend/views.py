@@ -1,5 +1,5 @@
 """
-Toonify - UI Views and Components
+Neuralcanvas - UI Views and Components
 Professional Developer-Friendly Interface
 """
 import streamlit as st
@@ -20,7 +20,7 @@ from styles import glass_card, render_header, render_status
 
 def render_auth_page():
     """Render the authentication page with login/signup."""
-    render_header("Toonify AI", "v1.0.0")
+    render_header("Neuralcanvas AI", "v1.0.0")
     
     col1, col2 = st.columns([1, 1], gap="large")
     
@@ -245,7 +245,7 @@ def render_transform_tab():
         )
         
         if uploaded_file:
-            st.image(uploaded_file, caption="Original Image", use_container_width=True)
+            st.image(uploaded_file, caption="Original Image", use_column_width=True)
         
         st.markdown("### 🎨 Style Configuration")
         
@@ -278,7 +278,7 @@ def render_transform_tab():
             if job.get("status") == "completed":
                 processed_data, _ = get_image(job["id"], "processed")
                 if processed_data:
-                    st.image(processed_data, caption="Transformed Result", use_container_width=True)
+                    st.image(processed_data, caption="Transformed Result", use_column_width=True)
                     
                     col_a, col_b = st.columns(2)
                     with col_a:
@@ -350,7 +350,7 @@ def render_classify_tab():
         )
         
         if uploaded_file:
-            st.image(uploaded_file, caption="Input Face", use_container_width=True)
+            st.image(uploaded_file, caption="Input Face", use_column_width=True)
             
             if st.button("🔍 Run Inference", use_container_width=True):
                 with st.spinner("Analyzing..."):
@@ -410,7 +410,7 @@ def render_generator_tab():
         )
         
         if uploaded_file:
-            st.image(uploaded_file, caption="Input Photo", use_container_width=True)
+            st.image(uploaded_file, caption="Input Photo", use_column_width=True)
             
             if st.button("🎨 Generate Art", use_container_width=True):
                 with st.spinner("Generating..."):
@@ -427,7 +427,7 @@ def render_generator_tab():
         st.markdown("### 🖼️ Generated Output")
         
         if st.session_state.generator_result:
-            st.image(st.session_state.generator_result, caption="AI Generated", use_container_width=True)
+            st.image(st.session_state.generator_result, caption="AI Generated", use_column_width=True)
             
             col_a, col_b = st.columns(2)
             with col_a:

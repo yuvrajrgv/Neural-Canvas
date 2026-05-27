@@ -1,4 +1,4 @@
-# Troubleshooting Guide - Toonify AI Frontend
+# Troubleshooting Guide - Neuralcanvas AI Frontend
 
 ## ✅ Fixed Issues
 

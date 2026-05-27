@@ -1,7 +1,7 @@
 [README.md](https://github.com/user-attachments/files/28308588/README.md)
 <div align="center">
 
-# 🎨 Toonify AI
+# 🎨 Neuralcanvas AI
 
 ### *Remix Reality. Neural Magic.*
 
@@ -24,7 +24,7 @@
 
 ### Landing Page
 ![Landing Page](docs/screenshots/landing.png)
-*The Toonify landing page — tagline "Remix Reality. Neural Magic." with feature highlights.*
+*The Neuralcanvas landing page — tagline "Remix Reality. Neural Magic." with feature highlights.*
 
 ### Authentication Screen
 ![Auth Screen](docs/screenshots/auth.png)
@@ -52,9 +52,9 @@
 
 ---
 
-## 📖 What is Toonify?
+## 📖 What is Neuralcanvas?
 
-Toonify is a full-stack AI-powered image transformation platform. Upload any photo of a face and apply one of **5 artistic styles** using computer vision and deep learning models. It also ships with:
+Neuralcanvas is a full-stack AI-powered image transformation platform. Upload any photo of a face and apply one of **5 artistic styles** using computer vision and deep learning models. It also ships with:
 
 - A **GAN-based cartoon generator** (trained from scratch — see `Cartoon_Generator_Training.ipynb`)
 - A **cartoon face classifier** that recognizes 100 public figures in cartoon form
@@ -82,7 +82,7 @@ Toonify is a full-stack AI-powered image transformation platform. Upload any pho
 ## 🏗️ Architecture
 
 ```
-Toonify/
+Neuralcanvas/
 ├── backend/                   # FastAPI server
 │   ├── app/
 │   │   ├── main.py            # App entry point, CORS, router mounts
@@ -144,8 +144,8 @@ Toonify/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yuvrajrgv/Toonify.git
-cd Toonify
+git clone https://github.com/yuvrajrgv/Neuralcanvas.git
+cd Neuralcanvas
 ```
 
 ---
@@ -414,6 +414,6 @@ This project is open source. See the repository for license details.
 
 **Built with ❤️ by [yuvrajrgv](https://github.com/yuvrajrgv)**
 
-*Toonify AI — Upload a photo. See yourself as a cartoon.*
+*Neuralcanvas AI — Upload a photo. See yourself as a cartoon.*
 
 </div>
