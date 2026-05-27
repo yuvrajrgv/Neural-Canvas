@@ -23,7 +23,8 @@
 > **To add your screenshots:** Create a `docs/screenshots/` folder in your repo, drop your images there, and replace the placeholder paths below.
 
 ### Landing Page
-![Landing Page](docs/screenshots/landing.png)
+![Landing Page](<img width="1836" height="825" alt="Screenshot 2026-05-28 011714" src="https://github.com/user-attachments/assets/bd04e96c-8924-42e9-b26b-feb050f0bd5f" />
+)
 *The Neuralcanvas landing page — tagline "Remix Reality. Neural Magic." with feature highlights.*
 
 ### Authentication Screen
