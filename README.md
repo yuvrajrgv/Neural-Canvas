@@ -2,11 +2,15 @@
 
 Remix Reality. Neural Magic.
 
-Neural Canvas AI transforms face photos into stylized artwork using computer vision and deep learning. The project brings together artistic filters, cartoon generation, image history, and account-based access in one full-stack AI image experience.
+Neural Canvas AI is a full-stack AI image transformation project built around FastAPI, Streamlit, OpenCV, and PyTorch. It turns face photos into stylized artwork while also supporting cartoon generation, cartoon face classification, image history, and account-based access.
+
+The project is meant to feel like a real creative app, not just a model demo. A user can upload an image, choose a visual style, generate a result, compare the output, download it, and revisit earlier transformations from their history.
 
 ## Overview
 
-Neural Canvas is designed for turning portraits into expressive visual styles such as cartoon, pencil sketch, color pencil, edge-preserved painting, and watercolor. It also includes a GAN-based cartoon generator and a cartoon face classifier that can identify public figures from cartoon-style images.
+Neural Canvas is designed for portrait-based image transformation. It includes classic computer-vision effects such as sketch and watercolor styles, plus deep-learning features for cartoon generation and cartoon face classification.
+
+The goal of the project is to combine a practical backend, a usable app interface, and AI-powered image processing into one clean product experience. It shows how machine learning can be wrapped inside a complete application flow instead of being limited to notebooks or isolated scripts.
 
 The experience focuses on a simple creative flow:
 
@@ -15,17 +19,55 @@ The experience focuses on a simple creative flow:
 3. Generate the transformed result.
 4. View, compare, download, or revisit previous transformations.
 
-## Key Features
+## Screenshots
+
+Add project screenshots in `docs/screenshots/` and replace these placeholder files with your actual images.
+
+| App Area | Preview |
+|---|---|
+| Upload and style selection | ![Upload and style selection](docs/screenshots/upload-and-style.png) |
+| Transformation result | ![Transformation result](docs/screenshots/transformation-result.png) |
+| Gallery and history | ![Gallery and history](docs/screenshots/gallery-history.png) |
+| Cartoon tools | ![Cartoon tools](docs/screenshots/cartoon-tools.png) |
+
+## Features
 
 | Feature | Description |
 |---|---|
-| Artistic transformations | Converts uploaded face photos into multiple visual styles. |
-| Cartoon generation | Produces cartoon-style output from real images using a trained generator model. |
-| Cartoon face classification | Recognizes public figures from cartoon images. |
-| User accounts | Supports authenticated access for a personalized experience. |
-| Transformation history | Keeps a record of generated image jobs for each user. |
-| Result comparison | Shows original and transformed images side by side. |
-| Download support | Lets users save generated artwork after processing. |
+| Artistic transformations | Converts uploaded face photos into styles such as cartoon, pencil sketch, color pencil, edge-preserved painting, and watercolor. |
+| Cartoon generation | Uses a trained generator model to create cartoon-style output from real portrait images. |
+| Cartoon face classification | Classifies cartoon images against a set of public figure identities. |
+| User accounts | Gives users a personalized space for their image activity and transformation history. |
+| Image job history | Stores previous transformations so users can return to earlier results. |
+| Result comparison | Presents the original and transformed images together for easy visual comparison. |
+| Download support | Lets users save generated artwork after processing is complete. |
+
+## Architecture
+
+Neural Canvas is split into a simple app layer, backend layer, AI processing layer, and storage layer. The app interface handles the user workflow, while the backend manages authentication, image jobs, and calls into the image processing and model components.
+
+```text
+User
+  |
+  v
+Streamlit App Interface
+  |
+  v
+FastAPI Backend
+  |
+  +-- Authentication and user data
+  +-- Image upload and job management
+  +-- OpenCV style transformations
+  +-- PyTorch cartoon generator and classifier
+  |
+  v
+Storage
+  +-- Uploaded images
+  +-- Processed results
+  +-- Trained model weights
+```
+
+The backend contains the main application logic, routers, database models, schemas, services, image processing code, and ML model loaders. The frontend contains the Streamlit app experience. Storage is used for original uploads and generated outputs, while the model weights support the cartoon generator and classifier.
 
 ## Transformation Styles
 
