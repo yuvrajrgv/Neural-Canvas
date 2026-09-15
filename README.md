@@ -19,16 +19,6 @@ The experience focuses on a simple creative flow:
 3. Generate the transformed result.
 4. View, compare, download, or revisit previous transformations.
 
-## Screenshots
-
-Add project screenshots in `docs/screenshots/` and replace these placeholder files with your actual images.
-
-| App Area | Preview |
-|---|---|
-| Upload and style selection | ![Upload and style selection](docs/screenshots/upload-and-style.png) |
-| Transformation result | ![Transformation result](docs/screenshots/transformation-result.png) |
-| Gallery and history | ![Gallery and history](docs/screenshots/gallery-history.png) |
-| Cartoon tools | ![Cartoon tools](docs/screenshots/cartoon-tools.png) |
 
 ## Features
 
