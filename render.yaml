@@ -1,3 +1,4 @@
+
 services:
   - type: web
     name: neural-canvas-api
@@ -7,6 +8,8 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
       - key: DATABASE_URL
         fromDatabase:
           name: neural-canvas-db
@@ -27,6 +30,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run app.py --server.address 0.0.0.0 --server.port $PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
       - key: API_BASE_URL
         fromService:
           type: web
