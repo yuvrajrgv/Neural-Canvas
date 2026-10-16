@@ -10,15 +10,15 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Neuralcanvas"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
     
 
     # Database
-    DATABASE_URL: str = "postgresql://postgres:root@localhost:5432/toonify"
+    DATABASE_URL: str = "sqlite:///./neuralcanvas.db"
     
 
     # JWT Settings
-    SECRET_KEY: str = ""
+    SECRET_KEY: str = "dev-only-change-me"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7

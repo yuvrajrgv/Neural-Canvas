@@ -3,10 +3,13 @@ Neuralcanvas - API Utilities and Session Management
 """
 import streamlit as st
 import requests
+import os
 from typing import Optional, Tuple, Any, Dict
 
 # Configuration
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+if not API_BASE_URL.startswith(("http://", "https://")):
+    API_BASE_URL = f"https://{API_BASE_URL}"
 
 
 def init_session_state():

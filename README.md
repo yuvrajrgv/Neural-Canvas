@@ -91,6 +91,12 @@ Neural Canvas AI is a full-stack image transformation project with:
 - Local storage for uploaded and processed files.
 - Trained model assets for cartoon generation and classification.
 
+## Deploy on Render
+
+The repository includes a `render.yaml` blueprint that creates a FastAPI API service, a Streamlit frontend service, and a PostgreSQL database. In Render, create a new Blueprint and select this repository. Render generates `SECRET_KEY`, injects the database connection string, and connects the frontend to the API automatically.
+
+The default deployment stores uploaded and processed images under `/tmp`, which is ephemeral on Render. Use a persistent disk or object storage before relying on image history in production. The included model weights are loaded from `backend/ml_weights` during API startup.
+
 ## Author
 
 Built by [yuvrajrgv](https://github.com/yuvrajrgv).

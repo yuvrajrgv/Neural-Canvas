@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: neural-canvas-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: neural-canvas-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: UPLOAD_DIR
+        value: /tmp/neural-canvas/uploads
+      - key: PROCESSED_DIR
+        value: /tmp/neural-canvas/processed
+
+  - type: web
+    name: neural-canvas-frontend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run frontend/app.py --server.address 0.0.0.0 --server.port $PORT
+    envVars:
+      - key: API_BASE_URL
+        fromService:
+          type: web
+          name: neural-canvas-api
+          property: host
+
+databases:
+  - name: neural-canvas-db
