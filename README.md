@@ -28,7 +28,6 @@ Neural Canvas is also a practical learning project. It connects classical OpenCV
 [![Open the Live App](https://img.shields.io/badge/1._Open_Live_App-0ea5e9?style=for-the-badge)](https://neural-canvas-0hab.onrender.com/)
 [![Run Locally](https://img.shields.io/badge/2._Run_Locally-111827?style=for-the-badge)](#run-locally)
 [![Explore the Workflow](https://img.shields.io/badge/3._Explore_Workflows-10b981?style=for-the-badge)](#how-it-works)
-[![Deploy with Render](https://img.shields.io/badge/4._Deploy_with_Render-f59e0b?style=for-the-badge)](#deploy-with-render)
 
 </div>
 
@@ -42,7 +41,6 @@ Neural Canvas is also a practical learning project. It connects classical OpenCV
 | Generate a cartoon | [Read about the generator](#ai-models) |
 | Classify a cartoon face | [Read about the classifier](#ai-models) |
 | Run the project on my machine | [Follow the local setup](#run-locally) |
-| Deploy the two services | [Follow the Render setup](#deploy-with-render) |
 
 </details>
 
@@ -57,11 +55,8 @@ Neural Canvas is also a practical learning project. It connects classical OpenCV
 - [Architecture](#architecture)
 - [Transformation Styles](#transformation-styles)
 - [AI Models](#ai-models)
-- [Authentication and Data](#authentication-and-data)
 - [Project Structure](#project-structure)
 - [Run Locally](#run-locally)
-- [Deploy with Render](#deploy-with-render)
-- [License](#license)
 - [Future Scope](#future-scope)
 
 ## What It Does
@@ -172,33 +167,6 @@ Input images are resized to a maximum longest dimension of 1200 pixels before Op
 
 Both model accessors use singleton instances. Model creation is protected by the shared lock in `backend/app/ml/inference_lock.py`, and model inference is serialized within the process to keep memory use predictable on small Render instances.
 
-## Authentication and Data
-
-### Authentication
-
-- Passwords are hashed with `bcrypt`; plaintext passwords are never stored.
-- Access tokens expire according to `ACCESS_TOKEN_EXPIRE_MINUTES`.
-- Refresh tokens expire according to `REFRESH_TOKEN_EXPIRE_DAYS`.
-- Protected image routes use bearer-token authentication.
-- Duplicate email or username registration returns a client error instead of creating a second account.
-- Database failures during authentication return a generic temporary-unavailable response without exposing SQL, credentials, or stack traces to clients.
-
-### Database models
-
-The application currently stores:
-
-- `users`: account identity, password hash, activation state, and timestamps.
-- `image_jobs`: uploaded filename/path, selected style, processing status, generated paths, error state, download count, and timestamps.
-
-### Storage
-
-The configured directories are:
-
-- `UPLOAD_DIR`: original uploaded files.
-- `PROCESSED_DIR`: generated and comparison files.
-
-The Render blueprint points both directories to `/tmp/neural-canvas`. Render filesystem storage is ephemeral, so persistent image history requires a persistent disk or object storage integration.
-
 ## Project Structure
 
 ```text
@@ -275,54 +243,6 @@ streamlit run app.py --server.address 0.0.0.0 --server.port 8501
 ```
 
 The Streamlit interface will be available at `http://localhost:8501`.
-
-### Configuration
-
-Important backend settings are read from environment variables:
-
-| Variable | Purpose | Default |
-| --- | --- | --- |
-| `DATABASE_URL` | SQLAlchemy database connection string. | `sqlite:///./neuralcanvas.db` |
-| `SECRET_KEY` | JWT signing secret. | Development-only fallback; set this in deployment. |
-| `DEBUG` | Application debug flag. | `false` |
-| `UPLOAD_DIR` | Original upload directory. | `storage/uploads` |
-| `PROCESSED_DIR` | Generated file directory. | `storage/processed` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access-token lifetime. | `30` |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh-token lifetime. | `7` |
-
-The frontend reads `API_BASE_URL`. It accepts either a complete URL such as `https://api.example.com` or a hostname and normalizes it to HTTPS.
-
-## Deploy with Render
-
-The repository includes `render.yaml` for a three-part deployment:
-
-1. `neural-canvas-api`: FastAPI service rooted at `backend/`.
-2. `neural-canvas-frontend`: Streamlit service rooted at `frontend/`.
-3. `neural-canvas-db`: PostgreSQL database connected to the backend.
-
-The backend starts with:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
-
-The frontend starts with:
-
-```bash
-streamlit run app.py --server.address 0.0.0.0 --server.port $PORT
-```
-
-The blueprint injects the database connection string, generates `SECRET_KEY`, configures `/health` as the backend health check, and passes the backend hostname to the frontend through `API_BASE_URL`.
-
-The deployed frontend is available at:
-
-**[https://neural-canvas-0hab.onrender.com/](https://neural-canvas-0hab.onrender.com/)**
-
-For production use, configure persistent storage for uploaded and processed images. The current `/tmp` paths are suitable for ephemeral processing but should not be treated as durable user storage.
-
-## License
-
-No separate license file is currently included in the repository. Add a license before distributing Neural Canvas as an open-source project.
 
 ## Author
 
