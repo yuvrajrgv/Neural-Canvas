@@ -13,24 +13,56 @@ Neural Canvas is a full-stack AI image transformation application. It combines a
 
 The deployed application is available at **[neural-canvas-0hab.onrender.com](https://neural-canvas-0hab.onrender.com/)**.
 
+## Why I Built This
+
+I built Neural Canvas to explore how computer vision and deep learning can become a complete, approachable creative product instead of remaining isolated inside notebooks or model demos.
+
+Image transformation is a natural way to make AI tangible: users can upload a familiar portrait, choose a visual direction, and immediately see how different algorithms interpret the same image. The project brings together that visual experimentation with the engineering challenges behind a real application, including authentication, asynchronous jobs, persistent metadata, file handling, model serving, and deployment.
+
+Neural Canvas is also a practical learning project. It connects classical OpenCV techniques with trained PyTorch models and wraps both inside a full-stack workflow that people can actually use.
+
+## Start Here
+
+<div align="center">
+
+[![Open the Live App](https://img.shields.io/badge/1._Open_Live_App-0ea5e9?style=for-the-badge)](https://neural-canvas-0hab.onrender.com/)
+[![Run Locally](https://img.shields.io/badge/2._Run_Locally-111827?style=for-the-badge)](#run-locally)
+[![Explore the Workflow](https://img.shields.io/badge/3._Explore_Workflows-10b981?style=for-the-badge)](#how-it-works)
+[![Deploy with Render](https://img.shields.io/badge/4._Deploy_with_Render-f59e0b?style=for-the-badge)](#deploy-with-render)
+
+</div>
+
+<details open>
+<summary><b>Choose a workflow</b></summary>
+
+| I want to... | Start here |
+| --- | --- |
+| Try the application | [Open the deployed Neural Canvas app](https://neural-canvas-0hab.onrender.com/) |
+| Transform a portrait | [Read the transformation workflow](#how-it-works) |
+| Generate a cartoon | [Read about the generator](#ai-models) |
+| Classify a cartoon face | [Read about the classifier](#ai-models) |
+| Run the project on my machine | [Follow the local setup](#run-locally) |
+| Deploy the two services | [Follow the Render setup](#deploy-with-render) |
+
+</details>
+
 ---
 
 ## Contents
 
 - [What It Does](#what-it-does)
+- [Why I Built This](#why-i-built-this)
 - [Features](#features)
 - [How It Works](#how-it-works)
 - [Architecture](#architecture)
 - [Transformation Styles](#transformation-styles)
 - [AI Models](#ai-models)
 - [Authentication and Data](#authentication-and-data)
-- [API Overview](#api-overview)
 - [Project Structure](#project-structure)
 - [Run Locally](#run-locally)
 - [Deploy with Render](#deploy-with-render)
-- [Memory and Performance](#memory-and-performance)
-- [Limitations and Future Work](#limitations-and-future-work)
 - [License](#license)
+- [Future Scope](#future-scope)
 
 ## What It Does
 
@@ -167,51 +199,6 @@ The configured directories are:
 
 The Render blueprint points both directories to `/tmp/neural-canvas`. Render filesystem storage is ephemeral, so persistent image history requires a persistent disk or object storage integration.
 
-## API Overview
-
-FastAPI exposes interactive documentation at `/docs` and `/redoc` on the backend service.
-
-### System
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/` | API metadata and running status. |
-| `GET` | `/health` | Lightweight health check used by Render. |
-
-### Authentication
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `POST` | `/auth/signup` | Create an account and return JWT tokens. |
-| `POST` | `/auth/login` | Authenticate with username or email. |
-| `POST` | `/auth/login/form` | OAuth2-compatible form login for Swagger. |
-| `POST` | `/auth/refresh` | Exchange a refresh token for new tokens. |
-| `GET` | `/auth/me` | Return the current authenticated user. |
-| `POST` | `/auth/change-password` | Change the current user's password. |
-
-### Image jobs
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/images/styles` | List available transformation styles. |
-| `POST` | `/images/upload` | Upload an image and create a job. |
-| `POST` | `/images/{job_id}/process` | Start background processing. |
-| `GET` | `/images/{job_id}` | Get job status and result URLs. |
-| `GET` | `/images/` | List the current user's jobs. |
-| `GET` | `/images/file/{job_id}/{file_type}` | Retrieve original, processed, or comparison files. |
-| `GET` | `/images/download/{job_id}` | Download a completed processed file. |
-
-### Cartoon AI tools
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/cartoon/info` | Classifier metadata and identities. |
-| `POST` | `/cartoon/classify` | Classify an uploaded cartoon face. |
-| `GET` | `/cartoon/identities` | List all classifier identities. |
-| `GET` | `/cartoon/health` | Classifier model status. |
-| `POST` | `/cartoon/generate` | Generate a cartoon PNG from an uploaded photo. |
-| `GET` | `/cartoon/generator/info` | Generator model metadata. |
-
 ## Project Structure
 
 ```text
@@ -333,30 +320,6 @@ The deployed frontend is available at:
 
 For production use, configure persistent storage for uploaded and processed images. The current `/tmp` paths are suitable for ephemeral processing but should not be treated as durable user storage.
 
-## Memory and Performance
-
-The application is designed for small-memory deployment environments:
-
-- The generator preprocesses images at a maximum dimension of 512 pixels.
-- OpenCV processing is capped at 1200 pixels on the longest side.
-- Model inference uses `torch.inference_mode()` and evaluation mode.
-- Generator and classifier inference share one process-wide lock.
-- CPU-bound model calls run in worker threads instead of blocking the async event loop.
-- Model and processor singletons prevent duplicate instances within a worker.
-- Processor, generator, and classifier imports are deferred until their features are used.
-- Temporary PIL images, tensors, buffers, and OpenCV arrays are released after processing.
-
-The generator and classifier are still large PyTorch workloads. A Render instance with a 512 MB limit should be monitored during real inference, and the backend should run with a single worker unless memory is measured carefully with multiple workers.
-
-## Limitations and Future Work
-
-- Render `/tmp` storage is ephemeral; durable image storage is not yet integrated.
-- Model inference is CPU-bound on deployments without a GPU and may take time for larger inputs.
-- The standard image transformation flow uses background tasks backed by the API process rather than a separate job queue.
-- There is no automated test suite in the repository yet.
-- The generator and classifier checkpoints are bundled in the repository, which increases deployment size.
-- A production deployment would benefit from object storage, structured migrations, rate limiting, and external job processing.
-
 ## License
 
 No separate license file is currently included in the repository. Add a license before distributing Neural Canvas as an open-source project.
@@ -364,3 +327,18 @@ No separate license file is currently included in the repository. Add a license 
 ## Author
 
 Built by [yuvrajrgv](https://github.com/yuvrajrgv).
+
+## Future Scope
+
+Neural Canvas can grow into a richer creative studio through several focused additions:
+
+- Add durable object storage so user galleries survive service restarts and ephemeral deployments.
+- Introduce more artistic models, including anime, comic-book, watercolor, and sketch-specific generators.
+- Add side-by-side editing controls for intensity, color, edge strength, and output resolution.
+- Support batch processing and downloadable collections for multiple images.
+- Add richer gallery features such as search, filters, favorites, sharing, and image metadata.
+- Move long-running jobs to a dedicated queue and worker system for more reliable scaling.
+- Add model versioning and experiment tracking so generated results can be reproduced.
+- Expand the classifier with more identities and clearer confidence visualizations.
+- Add automated API, authentication, image-processing, and model smoke tests.
+- Provide optional GPU-backed deployment for faster generation and classification.
