@@ -18,7 +18,6 @@ from app.schemas.image import (
     StylesListResponse,
 )
 from app.services.image_service import image_service
-from app.image_processing.processor import ImageProcessor
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.image_job import JobStatus
@@ -146,7 +145,12 @@ def process_image_task(db_url: str, job_id: int):
     
     logger = logging.getLogger(__name__)
     
+    engine = None
+    db = None
+    job = None
     try:
+        from app.image_processing.processor import get_image_processor
+
         # Create new engine and session for background task
         engine = create_engine(db_url, pool_pre_ping=True)
         SessionLocal = sessionmaker(bind=engine)
@@ -155,12 +159,11 @@ def process_image_task(db_url: str, job_id: int):
         job = db.query(ImageJob).filter(ImageJob.id == job_id).first()
         if not job:
             logger.error(f"Job {job_id} not found")
-            db.close()
             return
         
         logger.info(f"Starting processing for job {job_id} with style {job.style}")
         
-        processor = ImageProcessor()
+        processor = get_image_processor()
         
         # Process image
         processed_path, comparison_path = processor.process_image(
@@ -191,7 +194,10 @@ def process_image_task(db_url: str, job_id: int):
             pass
     finally:
         try:
-            db.close()
+            if db is not None:
+                db.close()
+            if engine is not None:
+                engine.dispose()
         except:
             pass
 

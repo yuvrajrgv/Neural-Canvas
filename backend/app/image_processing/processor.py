@@ -8,20 +8,11 @@ import os
 from typing import Tuple
 import uuid
 import logging
+import threading
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
-# Try to import the DL-based cartoon generator
-try:
-    from app.ml.cartoon_generator import get_cartoon_transfer
-    DL_CARTOON_AVAILABLE = True
-    logger.info("Deep learning cartoon generator available")
-except ImportError as e:
-    DL_CARTOON_AVAILABLE = False
-    logger.warning(f"Deep learning cartoon generator not available: {e}")
-
 
 class ImageProcessor:
     """
@@ -39,20 +30,7 @@ class ImageProcessor:
         self.output_dir = settings.PROCESSED_DIR
         os.makedirs(self.output_dir, exist_ok=True)
         
-        self.use_dl_model = use_dl_model and DL_CARTOON_AVAILABLE
-        self._cartoon_transfer = None
-        
-        if self.use_dl_model:
-            try:
-                self._cartoon_transfer = get_cartoon_transfer()
-                if self._cartoon_transfer.is_model_loaded():
-                    logger.info("Using deep learning model for cartoon generation")
-                else:
-                    logger.info("DL model not loaded, falling back to OpenCV")
-                    self.use_dl_model = False
-            except Exception as e:
-                logger.warning(f"Failed to initialize DL cartoon model: {e}")
-                self.use_dl_model = False
+        self.use_dl_model = use_dl_model
     
     def process_image(self, input_path: str, style: str) -> Tuple[str, str]:
         """
@@ -106,7 +84,7 @@ class ImageProcessor:
         
         return processed_path, comparison_path
     
-    def _resize_if_needed(self, img: np.ndarray, max_size: int = 2000) -> np.ndarray:
+    def _resize_if_needed(self, img: np.ndarray, max_size: int = 1200) -> np.ndarray:
         """Resize image if larger than max_size while maintaining aspect ratio"""
         h, w = img.shape[:2]
         if max(h, w) > max_size:
@@ -337,5 +315,19 @@ class ImageProcessor:
         return comparison
 
 
-# Singleton instance
-image_processor = ImageProcessor()
+# Lazily-created processor singleton. Constructing this object is intentionally
+# separate from importing the module so future model-backed processors do not
+# affect authentication or health-check startup.
+_image_processor_instance = None
+_image_processor_lock = threading.Lock()
+
+
+def get_image_processor() -> ImageProcessor:
+    """Get the shared image processor, creating it on first use."""
+    global _image_processor_instance
+
+    with _image_processor_lock:
+        if _image_processor_instance is None:
+            _image_processor_instance = ImageProcessor()
+
+    return _image_processor_instance

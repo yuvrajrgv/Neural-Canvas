@@ -20,8 +20,8 @@ if is_sqlite:
 else:
     # Apply pooling options for networked DBs like Postgres
     engine_kwargs.update({
-        "pool_size": 10,
-        "max_overflow": 20,
+        "pool_size": 5,
+        "max_overflow": 5,
     })
 
 engine = create_engine(settings.DATABASE_URL, **engine_kwargs)

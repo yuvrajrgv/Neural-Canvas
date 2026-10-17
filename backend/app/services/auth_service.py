@@ -2,6 +2,7 @@
 Authentication and user management service
 """
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from typing import Optional
 
@@ -59,9 +60,16 @@ class AuthService:
             hashed_password=hashed_password,
         )
         
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
+        try:
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email or username already registered"
+            )
         
         return db_user
     

@@ -4,6 +4,8 @@ Authentication routes
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+import logging
 
 from app.database import get_db
 from app.schemas.user import (
@@ -20,6 +22,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -32,7 +35,14 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     - **password**: Strong password (8+ chars, uppercase, lowercase, digit, special char)
     - **full_name**: Optional full name
     """
-    user = auth_service.create_user(db, user_data)
+    try:
+        user = auth_service.create_user(db, user_data)
+    except SQLAlchemyError:
+        logger.error("Database error during signup")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service is temporarily unavailable"
+        )
     tokens = auth_service.generate_tokens(user)
     
     return TokenResponse(
@@ -50,7 +60,14 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
     
     Returns access and refresh tokens
     """
-    user = auth_service.authenticate_user(db, login_data)
+    try:
+        user = auth_service.authenticate_user(db, login_data)
+    except SQLAlchemyError:
+        logger.error("Database error during login")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service is temporarily unavailable"
+        )
     tokens = auth_service.generate_tokens(user)
     
     return TokenResponse(
@@ -70,7 +87,14 @@ async def login_form(
     OAuth2 compatible login endpoint (for Swagger UI)
     """
     login_data = UserLogin(username=form_data.username, password=form_data.password)
-    user = auth_service.authenticate_user(db, login_data)
+    try:
+        user = auth_service.authenticate_user(db, login_data)
+    except SQLAlchemyError:
+        logger.error("Database error during form login")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service is temporarily unavailable"
+        )
     tokens = auth_service.generate_tokens(user)
     
     return TokenResponse(

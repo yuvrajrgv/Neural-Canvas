@@ -16,12 +16,23 @@ from app.schemas.image import (
     CartoonModelInfo,
     CartoonPrediction,
 )
-from app.ml.cartoon_classifier import get_classifier
-from app.ml.cartoon_generator import get_cartoon_transfer
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cartoon", tags=["Cartoon Classification"])
+
+
+def _get_classifier():
+    """Import and create the classifier only when a classifier route needs it."""
+    from app.ml.cartoon_classifier import get_classifier
+
+    return get_classifier()
+
+
+def _get_cartoon_transfer():
+    """Import and create the generator only when a generator route needs it."""
+    from app.ml.cartoon_generator import get_cartoon_transfer
+
+    return get_cartoon_transfer()
 
 
 @router.get("/info", response_model=CartoonModelInfo)
@@ -32,7 +43,7 @@ async def get_model_info():
     Returns model status, number of classes, and list of recognizable identities.
     """
     try:
-        classifier = await asyncio.to_thread(get_classifier)
+        classifier = await asyncio.to_thread(_get_classifier)
         
         return CartoonModelInfo(
             model_loaded=classifier.is_model_loaded(),
@@ -76,7 +87,7 @@ async def classify_cartoon(
         top_k = 5
     
     try:
-        classifier = await asyncio.to_thread(get_classifier)
+        classifier = await asyncio.to_thread(_get_classifier)
         
         # Check if model is loaded
         if not classifier.is_model_loaded():
@@ -126,7 +137,7 @@ async def get_identities():
     Returns a list of all 100 celebrity names that the model can recognize.
     """
     try:
-        classifier = await asyncio.to_thread(get_classifier)
+        classifier = await asyncio.to_thread(_get_classifier)
         identities = classifier.get_all_identities()
         
         return {
@@ -147,7 +158,7 @@ async def classifier_health():
     Health check for the cartoon classification service.
     """
     try:
-        classifier = await asyncio.to_thread(get_classifier)
+        classifier = await asyncio.to_thread(_get_classifier)
         model_loaded = classifier.is_model_loaded()
         
         return {
@@ -189,7 +200,7 @@ async def generate_cartoon(
     cartoon_image = None
     output_buffer = None
     try:
-        cartoon_transfer = await asyncio.to_thread(get_cartoon_transfer)
+        cartoon_transfer = await asyncio.to_thread(_get_cartoon_transfer)
         
         # Check if model is loaded
         if not cartoon_transfer.is_model_loaded():
@@ -250,7 +261,7 @@ async def get_generator_info():
     Get information about the cartoon generator model.
     """
     try:
-        cartoon_transfer = await asyncio.to_thread(get_cartoon_transfer)
+        cartoon_transfer = await asyncio.to_thread(_get_cartoon_transfer)
         
         return {
             "model_loaded": cartoon_transfer.is_model_loaded(),
