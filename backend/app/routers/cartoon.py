@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse, Response
 from typing import Optional
 import logging
 import io
+import asyncio
 from PIL import Image
 
 from app.schemas.image import (
@@ -31,7 +32,7 @@ async def get_model_info():
     Returns model status, number of classes, and list of recognizable identities.
     """
     try:
-        classifier = get_classifier()
+        classifier = await asyncio.to_thread(get_classifier)
         
         return CartoonModelInfo(
             model_loaded=classifier.is_model_loaded(),
@@ -75,7 +76,7 @@ async def classify_cartoon(
         top_k = 5
     
     try:
-        classifier = get_classifier()
+        classifier = await asyncio.to_thread(get_classifier)
         
         # Check if model is loaded
         if not classifier.is_model_loaded():
@@ -92,7 +93,9 @@ async def classify_cartoon(
         image_bytes = await file.read()
         
         # Get predictions
-        predictions = classifier.predict_from_bytes(image_bytes, top_k=top_k)
+        predictions = await asyncio.to_thread(
+            classifier.predict_from_bytes, image_bytes, top_k
+        )
         
         # Convert to response format
         prediction_models = [
@@ -111,6 +114,8 @@ async def classify_cartoon(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Classification failed: {str(e)}"
         )
+    finally:
+        await file.close()
 
 
 @router.get("/identities")
@@ -121,7 +126,7 @@ async def get_identities():
     Returns a list of all 100 celebrity names that the model can recognize.
     """
     try:
-        classifier = get_classifier()
+        classifier = await asyncio.to_thread(get_classifier)
         identities = classifier.get_all_identities()
         
         return {
@@ -142,7 +147,7 @@ async def classifier_health():
     Health check for the cartoon classification service.
     """
     try:
-        classifier = get_classifier()
+        classifier = await asyncio.to_thread(get_classifier)
         model_loaded = classifier.is_model_loaded()
         
         return {
@@ -179,8 +184,12 @@ async def generate_cartoon(
             detail="File must be an image (jpg, jpeg, png, webp)"
         )
     
+    image_buffer = None
+    image = None
+    cartoon_image = None
+    output_buffer = None
     try:
-        cartoon_transfer = get_cartoon_transfer()
+        cartoon_transfer = await asyncio.to_thread(get_cartoon_transfer)
         
         # Check if model is loaded
         if not cartoon_transfer.is_model_loaded():
@@ -191,21 +200,24 @@ async def generate_cartoon(
         
         # Read image
         image_bytes = await file.read()
-        image = Image.open(io.BytesIO(image_bytes))
+        image_buffer = io.BytesIO(image_bytes)
+        image_bytes = None
+        image = Image.open(image_buffer)
         
         # Generate cartoon
         logger.info(f"Generating cartoon for image: {file.filename}")
-        cartoon_image = cartoon_transfer.generate(image)
-        
+        cartoon_image = await asyncio.to_thread(cartoon_transfer.generate, image)
+
         # Convert to bytes
         output_buffer = io.BytesIO()
         cartoon_image.save(output_buffer, format="PNG", quality=95)
         output_buffer.seek(0)
+        response_content = output_buffer.getvalue()
         
         logger.info(f"Successfully generated cartoon for: {file.filename}")
         
         return Response(
-            content=output_buffer.getvalue(),
+            content=response_content,
             media_type="image/png",
             headers={
                 "Content-Disposition": f"inline; filename=cartoon_{file.filename}"
@@ -220,6 +232,16 @@ async def generate_cartoon(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cartoon generation failed: {str(e)}"
         )
+    finally:
+        if cartoon_image is not None:
+            cartoon_image.close()
+        if image is not None:
+            image.close()
+        if image_buffer is not None:
+            image_buffer.close()
+        if output_buffer is not None:
+            output_buffer.close()
+        await file.close()
 
 
 @router.get("/generator/info")
@@ -228,7 +250,7 @@ async def get_generator_info():
     Get information about the cartoon generator model.
     """
     try:
-        cartoon_transfer = get_cartoon_transfer()
+        cartoon_transfer = await asyncio.to_thread(get_cartoon_transfer)
         
         return {
             "model_loaded": cartoon_transfer.is_model_loaded(),

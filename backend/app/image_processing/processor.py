@@ -70,8 +70,8 @@ class ImageProcessor:
         if img is None:
             raise ValueError(f"Could not read image: {input_path}")
         
-        # Resize if too large (max 2000px on longest side)
-        img = self._resize_if_needed(img, max_size=2000)
+        # Resize if too large (max 1200px on longest side)
+        img = self._resize_if_needed(img, max_size=1200)
         
         # Apply style
         style_methods = {
@@ -100,6 +100,9 @@ class ImageProcessor:
         # Create and save comparison image
         comparison = self._create_comparison(img, processed)
         cv2.imwrite(comparison_path, comparison)
+
+        # Release large intermediate arrays before returning to the caller.
+        del comparison, processed, img
         
         return processed_path, comparison_path
     
@@ -280,6 +283,7 @@ class ImageProcessor:
         centers = np.uint8(centers)
         quantized = centers[labels.flatten()]
         quantized = quantized.reshape(img.shape)
+        del data, labels, centers
         
         return quantized
     

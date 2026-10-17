@@ -12,6 +12,8 @@ import os
 import logging
 from typing import Tuple, Optional
 
+from app.ml.inference_lock import inference_lock
+
 logger = logging.getLogger(__name__)
 
 
@@ -150,7 +152,7 @@ class CartoonStyleTransfer:
         """Check if model weights are loaded."""
         return getattr(self, '_model_loaded', False)
     
-    def preprocess(self, image: Image.Image, max_size: int = 1024) -> torch.Tensor:
+    def preprocess(self, image: Image.Image, max_size: int = 512) -> torch.Tensor:
         """
         Preprocess image for model input.
         
@@ -171,14 +173,14 @@ class CartoonStyleTransfer:
             scale = max_size / max(w, h)
             new_w = int(w * scale)
             new_h = int(h * scale)
-            # Ensure dimensions are divisible by 4 for the network
-            new_w = (new_w // 4) * 4
-            new_h = (new_h // 4) * 4
+            # Ensure dimensions are divisible by 4 for the network.
+            new_w = max(4, (new_w // 4) * 4)
+            new_h = max(4, (new_h // 4) * 4)
             image = image.resize((new_w, new_h), Image.LANCZOS)
         else:
             # Ensure dimensions are divisible by 4
-            new_w = (w // 4) * 4
-            new_h = (h // 4) * 4
+            new_w = max(4, (w // 4) * 4)
+            new_h = max(4, (h // 4) * 4)
             if (new_w, new_h) != (w, h):
                 image = image.resize((new_w, new_h), Image.LANCZOS)
         
@@ -188,13 +190,13 @@ class CartoonStyleTransfer:
         
         return tensor.to(self.device), image.size
     
-    def postprocess(self, tensor: torch.Tensor, original_size: Tuple[int, int]) -> Image.Image:
+    def postprocess(self, tensor: torch.Tensor, target_size: Tuple[int, int]) -> Image.Image:
         """
         Postprocess model output to PIL Image.
         
         Args:
             tensor: Model output tensor
-            original_size: Original image size (w, h)
+            target_size: Bounded processed image size (w, h)
             
         Returns:
             PIL Image
@@ -215,9 +217,9 @@ class CartoonStyleTransfer:
         # Convert to PIL Image
         image = Image.fromarray(image_np)
         
-        # Resize back to original size if needed
-        if image.size != original_size:
-            image = image.resize(original_size, Image.LANCZOS)
+        # Match the bounded processing size if the model changes dimensions.
+        if image.size != target_size:
+            image = image.resize(target_size, Image.LANCZOS)
         
         return image
     
@@ -231,19 +233,21 @@ class CartoonStyleTransfer:
         Returns:
             Cartoonified PIL Image
         """
-        original_size = image.size
-        
-        # Preprocess
-        input_tensor, proc_size = self.preprocess(image)
-        
-        # Generate
-        with torch.no_grad():
-            output_tensor = self.model(input_tensor)
-        
-        # Postprocess
-        result = self.postprocess(output_tensor, original_size)
-        
-        return result
+        input_tensor = output_tensor = None
+        with inference_lock:
+            try:
+                input_tensor, proc_size = self.preprocess(image)
+
+                with torch.inference_mode():
+                    output_tensor = self.model(input_tensor)
+
+                # Keep output at the bounded processing size instead of
+                # allocating a potentially huge full-resolution image.
+                result = self.postprocess(output_tensor, proc_size)
+                return result
+            finally:
+                input_tensor = None
+                output_tensor = None
     
     def generate_from_path(self, image_path: str) -> Image.Image:
         """
@@ -255,8 +259,8 @@ class CartoonStyleTransfer:
         Returns:
             Cartoonified PIL Image
         """
-        image = Image.open(image_path)
-        return self.generate(image)
+        with Image.open(image_path) as image:
+            return self.generate(image)
     
     def generate_from_numpy(self, image_np: np.ndarray) -> np.ndarray:
         """
@@ -275,12 +279,17 @@ class CartoonStyleTransfer:
         image_pil = Image.fromarray(image_rgb)
         
         # Generate
-        result_pil = self.generate(image_pil)
+        try:
+            result_pil = self.generate(image_pil)
+        finally:
+            image_pil.close()
         
         # Convert back to numpy BGR
-        result_np = np.array(result_pil)[:, :, ::-1]
-        
-        return result_np
+        try:
+            result_np = np.array(result_pil)[:, :, ::-1]
+            return result_np
+        finally:
+            result_pil.close()
 
 
 # Singleton instance
@@ -291,7 +300,8 @@ def get_cartoon_transfer() -> CartoonStyleTransfer:
     """Get or create singleton CartoonStyleTransfer instance."""
     global _cartoon_transfer_instance
     
-    if _cartoon_transfer_instance is None:
-        _cartoon_transfer_instance = CartoonStyleTransfer()
+    with inference_lock:
+        if _cartoon_transfer_instance is None:
+            _cartoon_transfer_instance = CartoonStyleTransfer()
     
     return _cartoon_transfer_instance

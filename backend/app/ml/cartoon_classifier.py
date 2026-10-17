@@ -11,6 +11,8 @@ import os
 from typing import Dict, List, Tuple, Optional
 import logging
 
+from app.ml.inference_lock import inference_lock
+
 logger = logging.getLogger(__name__)
 
 
@@ -136,35 +138,37 @@ class CartoonClassifier:
         Returns:
             List of predictions with identity names and confidence scores
         """
-        # Preprocess image
-        input_tensor = self.preprocess_image(image)
-        
-        # Run inference
-        with torch.no_grad():
-            outputs = self.model(input_tensor)
-            probabilities = torch.softmax(outputs, dim=1)
-        
-        # Get top-k predictions
-        top_probs, top_indices = torch.topk(probabilities, min(top_k, self.num_classes))
-        
-        predictions = []
-        idx_to_identity = self.label_mappings.get("idx_to_identity", {})
-        
-        for prob, idx in zip(top_probs[0], top_indices[0]):
-            idx_str = str(idx.item())
-            identity = idx_to_identity.get(idx_str, f"Unknown_{idx.item()}")
-            
-            # Format identity name (add spaces before capitals)
-            formatted_name = self._format_identity_name(identity)
-            
-            predictions.append({
-                "identity": identity,
-                "display_name": formatted_name,
-                "confidence": round(prob.item() * 100, 2),
-                "class_index": idx.item()
-            })
-        
-        return predictions
+        with inference_lock:
+            input_tensor = outputs = probabilities = top_probs = top_indices = None
+            try:
+                input_tensor = self.preprocess_image(image)
+
+                with torch.inference_mode():
+                    outputs = self.model(input_tensor)
+                    probabilities = torch.softmax(outputs, dim=1)
+                    top_probs, top_indices = torch.topk(
+                        probabilities, min(top_k, self.num_classes)
+                    )
+
+                predictions = []
+                idx_to_identity = self.label_mappings.get("idx_to_identity", {})
+
+                for prob, idx in zip(top_probs[0], top_indices[0]):
+                    idx_str = str(idx.item())
+                    identity = idx_to_identity.get(idx_str, f"Unknown_{idx.item()}")
+
+                    formatted_name = self._format_identity_name(identity)
+
+                    predictions.append({
+                        "identity": identity,
+                        "display_name": formatted_name,
+                        "confidence": round(prob.item() * 100, 2),
+                        "class_index": idx.item()
+                    })
+
+                return predictions
+            finally:
+                input_tensor = outputs = probabilities = top_probs = top_indices = None
     
     def predict_from_path(
         self, 
@@ -200,8 +204,10 @@ class CartoonClassifier:
             List of predictions
         """
         import io
-        image = Image.open(io.BytesIO(image_bytes))
-        return self.predict(image, top_k)
+        with io.BytesIO(image_bytes) as image_buffer:
+            del image_bytes
+            with Image.open(image_buffer) as image:
+                return self.predict(image, top_k)
     
     def _format_identity_name(self, name: str) -> str:
         """
@@ -235,7 +241,8 @@ def get_classifier() -> CartoonClassifier:
     """
     global _classifier_instance
     
-    if _classifier_instance is None:
-        _classifier_instance = CartoonClassifier()
+    with inference_lock:
+        if _classifier_instance is None:
+            _classifier_instance = CartoonClassifier()
     
     return _classifier_instance
